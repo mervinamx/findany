@@ -1,0 +1,69 @@
+version: "3.9"
+
+services:
+
+  # ── MySQL Database ─────────────────────────────────────────────
+  mysql:
+    image: mysql:8.0
+    container_name: findany-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: findany_root
+      MYSQL_DATABASE: findany
+      MYSQL_USER: findany_user
+      MYSQL_PASSWORD: findany_pass
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/findany.sql:/docker-entrypoint-initdb.d/01_findany.sql:ro
+    ports:
+      - "3306:3306"
+    networks:
+      - findany-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ufindany_user", "-pfindany_pass"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ── Python Flask Backend ──────────────────────────────────────────
+  backend:
+    build: ./backend
+    container_name: findany-backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: mysql+pymysql://findany_user:findany_pass@mysql/findany
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-3-5-sonnet-20241022}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./database:/app/../database:ro
+    networks:
+      - findany-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # ── Nginx + Frontend ──────────────────────────────────────────────
+  frontend:
+    build: ./frontend
+    container_name: findany-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
+    networks:
+      - findany-net
+
+networks:
+  findany-net:
+    driver: bridge
+
+volumes:
+  mysql_data:

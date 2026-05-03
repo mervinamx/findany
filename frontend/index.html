@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FindAny — Find Your Perfect Phone</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0a0a0f;--bg2:#111118;--bg3:#1a1a24;--bg4:#22222f;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
+  --text:#f0f0f8;--text2:#9898b8;--text3:#5a5a78;
+  --accent:#6c63ff;--accent2:#8b84ff;--accent-glow:rgba(108,99,255,0.15);
+  --green:#22d68a;--green-bg:rgba(34,214,138,0.08);
+  --red:#ff5757;--red-bg:rgba(255,87,87,0.08);
+  --amber:#ffb830;--amber-bg:rgba(255,184,48,0.08);
+  --card-radius:16px;--pill:100px;
+}
+[data-theme="light"] {
+  --bg:#f4f4fb;--bg2:#ffffff;--bg3:#ededf7;--bg4:#e3e3f0;
+  --border:rgba(0,0,0,0.07);--border2:rgba(0,0,0,0.12);
+  --text:#0f0f1a;--text2:#4a4a6a;--text3:#9898b8;
+  --accent-glow:rgba(108,99,255,0.1);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background .3s,color .3s;}
+h1,h2,h3,h4{font-family:'Syne',sans-serif;}
+.header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px solid var(--border);backdrop-filter:blur(20px);}
+.header-inner{max-width:1400px;margin:0 auto;padding:0 24px;height:64px;display:flex;align-items:center;gap:24px;}
+.logo{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--text);text-decoration:none;letter-spacing:-.5px;}
+.logo span{color:var(--accent2);}
+.search-wrap{flex:1;max-width:560px;position:relative;}
+.search-input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--pill);padding:10px 20px 10px 44px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none;transition:border .2s,box-shadow .2s;}
+.search-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow);}
+.search-input::placeholder{color:var(--text3);}
+.search-icon{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:16px;}
+.suggest-box{position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--bg2);border:1px solid var(--border2);border-radius:12px;overflow:hidden;z-index:200;display:none;}
+.suggest-item{padding:10px 16px;font-size:13px;cursor:pointer;color:var(--text2);}
+.suggest-item:hover{background:var(--bg3);color:var(--text);}
+.header-actions{display:flex;align-items:center;gap:12px;margin-left:auto;}
+.icon-btn{width:40px;height:40px;border-radius:50%;background:var(--bg3);border:1px solid var(--border);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .2s;position:relative;}
+.icon-btn:hover{border-color:var(--accent);color:var(--accent);}
+.badge{position:absolute;top:-4px;right:-4px;background:var(--accent);color:white;font-size:10px;font-weight:600;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+.nav-tabs{background:var(--bg2);border-bottom:1px solid var(--border);}
+.nav-tabs-inner{max-width:1400px;margin:0 auto;padding:0 24px;display:flex;gap:0;overflow-x:auto;scrollbar-width:none;}
+.nav-tabs-inner::-webkit-scrollbar{display:none;}
+.nav-tab{padding:14px 20px;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;}
+.nav-tab.active{color:var(--accent2);border-bottom-color:var(--accent2);}
+.hero{background:var(--bg2);border-bottom:1px solid var(--border);padding:16px 0;}
+.hero-inner{max-width:1400px;margin:0 auto;padding:0 24px;}
+.cat-row{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;}
+.cat-row::-webkit-scrollbar{display:none;}
+.cat-chip{display:flex;align-items:center;gap:6px;padding:7px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--pill);font-size:12px;font-weight:500;color:var(--text2);cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .2s;}
+.cat-chip:hover,.cat-chip.active{background:var(--accent-glow);border-color:rgba(108,99,255,.4);color:var(--accent2);}
+.main{max-width:1400px;margin:0 auto;padding:24px;display:grid;grid-template-columns:272px 1fr;gap:24px;}
+@media(max-width:900px){.main{grid-template-columns:1fr;}.sidebar{display:none;}}
+.sidebar{position:sticky;top:88px;height:fit-content;}
+.filter-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--card-radius);padding:20px;margin-bottom:12px;}
+.filter-title{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:14px;}
+.filter-section{margin-bottom:18px;}
+.filter-label{font-size:13px;font-weight:500;color:var(--text2);margin-bottom:8px;display:block;}
+.price-display{display:flex;justify-content:space-between;font-size:12px;color:var(--text3);margin-bottom:6px;}
+.price-display span{color:var(--text);font-weight:500;}
+input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer;}
+.chip-group{display:flex;flex-wrap:wrap;gap:5px;}
+.chip{padding:5px 10px;border-radius:var(--pill);background:var(--bg3);border:1px solid var(--border);font-size:11px;color:var(--text2);cursor:pointer;transition:all .2s;}
+.chip.active{background:var(--accent-glow);border-color:var(--accent);color:var(--accent2);}
+.apply-btn{width:100%;padding:11px;background:var(--accent);border:none;border-radius:10px;color:white;font-size:13px;font-weight:600;font-family:'Syne',sans-serif;cursor:pointer;transition:opacity .2s;}
+.apply-btn:hover{opacity:.9;}
+.reset-btn{width:100%;padding:9px;background:transparent;border:1px solid var(--border);border-radius:10px;color:var(--text2);font-size:12px;cursor:pointer;margin-top:6px;transition:all .2s;}
+.reset-btn:hover{border-color:var(--red);color:var(--red);}
+.content-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;}
+.result-count{font-size:14px;color:var(--text2);}
+.result-count strong{color:var(--text);font-weight:600;}
+.sort-select{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;color:var(--text);cursor:pointer;outline:none;font-family:'DM Sans',sans-serif;}
+.view-toggles{display:flex;gap:4px;}
+.view-btn{width:32px;height:32px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .2s;}
+.view-btn.active{background:var(--accent-glow);border-color:var(--accent);color:var(--accent2);}
+.phone-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px;}
+.phone-grid.list{grid-template-columns:1fr;}
+.phone-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--card-radius);overflow:hidden;cursor:pointer;transition:transform .2s,border-color .2s,box-shadow .2s;position:relative;}
+.phone-card:hover{transform:translateY(-3px);border-color:var(--border2);box-shadow:0 12px 40px rgba(0,0,0,.3);}
+.phone-card.in-compare{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-glow);}
+.card-badge{position:absolute;top:10px;left:10px;z-index:2;}
+.badge-pill{padding:3px 9px;border-radius:var(--pill);font-size:10px;font-weight:600;}
+.badge-pill.new{background:var(--accent-glow);color:var(--accent2);border:1px solid rgba(108,99,255,.3);}
+.badge-pill.bestseller{background:var(--amber-bg);color:var(--amber);border:1px solid rgba(255,184,48,.3);}
+.badge-pill.deal{background:var(--green-bg);color:var(--green);border:1px solid rgba(34,214,138,.3);}
+.card-actions{position:absolute;top:8px;right:8px;display:flex;flex-direction:column;gap:5px;z-index:2;}
+.card-action-btn{width:30px;height:30px;border-radius:50%;background:var(--bg3);border:1px solid var(--border);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .2s;}
+.card-action-btn:hover{border-color:var(--accent);color:var(--accent);}
+.card-img{background:var(--bg3);height:190px;display:flex;align-items:center;justify-content:center;padding:16px;}
+.card-img img{height:150px;width:100%;object-fit:contain;filter:drop-shadow(0 8px 24px rgba(0,0,0,.4));transition:transform .3s;}
+.phone-card:hover .card-img img{transform:scale(1.05);}
+.card-body{padding:14px;}
+.card-brand{font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:3px;}
+.card-name{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--text);margin-bottom:8px;line-height:1.3;}
+.card-specs{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px;}
+.spec-tag{padding:2px 7px;background:var(--bg3);border-radius:5px;font-size:10px;color:var(--text2);}
+.card-rating{display:flex;align-items:center;gap:5px;margin-bottom:10px;}
+.stars{color:var(--amber);font-size:12px;}
+.rating-num{font-size:12px;font-weight:500;}
+.rating-count{font-size:11px;color:var(--text3);}
+.card-price-section{border-top:1px solid var(--border);padding-top:10px;}
+.price-row{display:flex;align-items:baseline;gap:7px;margin-bottom:6px;}
+.price-main{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;}
+.price-old{font-size:13px;color:var(--text3);text-decoration:line-through;}
+.price-drop{font-size:11px;font-weight:600;color:var(--green);background:var(--green-bg);padding:2px 7px;border-radius:var(--pill);}
+.buy-links{display:flex;gap:5px;flex-wrap:wrap;}
+.buy-link{display:flex;align-items:center;gap:4px;padding:4px 9px;border-radius:7px;border:1px solid var(--border);font-size:10px;font-weight:500;color:var(--text2);text-decoration:none;transition:all .2s;background:var(--bg3);}
+.buy-link:hover{border-color:var(--accent);color:var(--accent2);}
+.buy-link.amazon:hover{border-color:#ff9900;color:#ff9900;}
+.buy-link.flipkart:hover{border-color:#2874f0;color:#2874f0;}
+.buy-link.croma:hover{border-color:#67b346;color:#67b346;}
+.buy-link.reliance:hover{border-color:#c00;color:#c00;}
+.store-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+.ai-banner{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--card-radius);padding:18px 20px;margin-bottom:20px;display:flex;align-items:flex-start;gap:14px;}
+.ai-icon{width:44px;height:44px;border-radius:12px;background:var(--accent-glow);border:1px solid rgba(108,99,255,.3);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.ai-text{flex:1;}
+.ai-text h3{font-size:14px;font-weight:600;margin-bottom:3px;}
+.ai-text p{font-size:12px;color:var(--text2);margin-bottom:8px;}
+.ai-input-wrap{display:flex;gap:6px;}
+.ai-input{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;transition:border .2s;}
+.ai-input:focus{border-color:var(--accent);}
+.ai-input::placeholder{color:var(--text3);}
+.ai-btn{padding:8px 14px;background:var(--accent);border:none;border-radius:8px;color:white;font-size:12px;font-weight:600;font-family:'Syne',sans-serif;cursor:pointer;white-space:nowrap;}
+.ai-response{background:var(--bg3);border:1px solid rgba(108,99,255,.2);border-radius:10px;padding:12px;margin-top:10px;font-size:12px;line-height:1.6;display:none;}
+.ai-response.show{display:block;}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--accent2);animation:bounce 1s infinite;display:inline-block;}
+.dot:nth-child(2){animation-delay:.15s;}.dot:nth-child(3){animation-delay:.3s;}
+@keyframes bounce{0%,60%,100%{transform:translateY(0);}30%{transform:translateY(-5px);}}
+.compare-bar{position:fixed;bottom:0;left:0;right:0;z-index:200;background:var(--bg2);border-top:1px solid var(--border2);padding:10px 24px;display:flex;align-items:center;gap:14px;transform:translateY(100%);transition:transform .3s;}
+.compare-bar.visible{transform:translateY(0);}
+.compare-slots{display:flex;gap:8px;flex:1;}
+.compare-slot{background:var(--bg3);border:1px dashed var(--border2);border-radius:8px;padding:7px 12px;min-width:140px;display:flex;align-items:center;gap:6px;font-size:12px;}
+.compare-slot.filled{background:var(--accent-glow);border-style:solid;border-color:rgba(108,99,255,.3);color:var(--text);}
+.compare-slot-empty{color:var(--text3);}
+.remove-slot{background:none;border:none;color:var(--text3);cursor:pointer;font-size:12px;padding:0;margin-left:auto;}
+.compare-now-btn{padding:10px 20px;background:var(--accent);border:none;border-radius:8px;color:white;font-size:13px;font-weight:600;font-family:'Syne',sans-serif;cursor:pointer;}
+.compare-now-btn:disabled{opacity:.4;cursor:not-allowed;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:500;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;opacity:0;pointer-events:none;transition:opacity .2s;}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:20px;width:100%;max-width:860px;overflow:hidden;}
+.modal-header{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.modal-title{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;}
+.modal-close{width:32px;height:32px;border-radius:50%;background:var(--bg3);border:1px solid var(--border);color:var(--text2);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;}
+.modal-body{padding:22px;}
+.detail-grid{display:grid;grid-template-columns:220px 1fr;gap:28px;}
+@media(max-width:600px){.detail-grid{grid-template-columns:1fr;}}
+.detail-img{background:var(--bg3);border-radius:14px;display:flex;align-items:center;justify-content:center;padding:20px;height:260px;}
+.detail-img img{height:200px;width:100%;object-fit:contain;}
+.detail-brand{font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:5px;}
+.detail-name{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;margin-bottom:8px;line-height:1.2;}
+.detail-price{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;margin-bottom:5px;}
+.price-meta{display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.detail-buy-links{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:18px;}
+.detail-buy-link{display:flex;align-items:center;gap:5px;padding:7px 13px;border-radius:8px;border:1px solid var(--border);font-size:12px;font-weight:500;color:var(--text2);text-decoration:none;transition:all .2s;background:var(--bg3);cursor:pointer;}
+.detail-buy-link:hover{transform:translateY(-1px);}
+.spec-table{width:100%;border-collapse:collapse;margin-top:6px;}
+.spec-table tr{border-bottom:1px solid var(--border);}
+.spec-table tr:last-child{border-bottom:none;}
+.spec-table td{padding:8px 0;font-size:12px;}
+.spec-table td:first-child{color:var(--text3);width:38%;}
+.spec-table td:last-child{color:var(--text);font-weight:500;}
+.price-history-chart{background:var(--bg3);border-radius:10px;height:100px;padding:12px;display:flex;align-items:flex-end;gap:5px;margin-top:10px;}
+.chart-bar-group{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;}
+.chart-bar{background:var(--accent);border-radius:3px 3px 0 0;width:100%;transition:height .5s;}
+.chart-label{font-size:9px;color:var(--text3);text-align:center;}
+.toast{position:fixed;bottom:80px;right:20px;background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:10px 16px;font-size:13px;font-weight:500;color:var(--text);z-index:999;transform:translateX(120%);transition:transform .3s;}
+.toast.show{transform:translateX(0);}
+.skeleton{background:linear-gradient(90deg,var(--bg3) 25%,var(--bg4) 50%,var(--bg3) 75%);background-size:200% 100%;animation:shimmer 1.2s infinite;border-radius:8px;}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.offline-banner{background:var(--red-bg);border:1px solid rgba(255,87,87,.2);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--red);margin-bottom:16px;display:none;}
+.offline-banner.show{display:block;}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px;}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<header class="header">
+  <div class="header-inner">
+    <a class="logo" href="#">Find<span>Any</span></a>
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input class="search-input" id="searchInput" type="text" placeholder="Search iPhone 16, Galaxy S26, Redmi Note 13..." autocomplete="off">
+      <div class="suggest-box" id="suggestBox"></div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" title="Compare" onclick="showView('compare')">⚖️</button>
+      <button class="icon-btn" id="wishlistBtn" title="Wishlist" onclick="showView('wishlist')">
+        🤍<span class="badge" id="wishBadge" style="display:none">0</span>
+      </button>
+      <button class="icon-btn" id="themeToggle" title="Toggle theme">🌙</button>
+    </div>
+  </div>
+</header>
+
+<div class="nav-tabs">
+  <div class="nav-tabs-inner">
+    <div class="nav-tab active" onclick="showView('browse')">📱 All Phones</div>
+    <div class="nav-tab" onclick="showView('compare')">⚖️ Compare</div>
+    <div class="nav-tab" onclick="showView('wishlist')">🤍 Wishlist</div>
+    <div class="nav-tab" onclick="showView('deals')">🔥 Hot Deals</div>
+  </div>
+</div>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="cat-row">
+      <div class="cat-chip active" onclick="filterCat('all',this)">📱 All</div>
+      <div class="cat-chip" onclick="filterCat('budget',this)">💰 Budget &lt;₹15K</div>
+      <div class="cat-chip" onclick="filterCat('mid',this)">⭐ Mid ₹15K–₹40K</div>
+      <div class="cat-chip" onclick="filterCat('flagship',this)">👑 Flagship ₹40K+</div>
+      <div class="cat-chip" onclick="filterCat('5g',this)">🚀 5G</div>
+      <div class="cat-chip" onclick="filterCat('camera',this)">📸 Best Camera</div>
+      <div class="cat-chip" onclick="filterCat('gaming',this)">🎮 Gaming</div>
+      <div class="cat-chip" onclick="filterCat('battery',this)">🔋 Big Battery</div>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <aside class="sidebar">
+    <div class="filter-card">
+      <div class="filter-title">Filters</div>
+      <div class="filter-section">
+        <label class="filter-label">💰 Price Range</label>
+        <div class="price-display">
+          <span>₹<span id="pMin">5,000</span></span>
+          <span>₹<span id="pMax">1,50,000</span></span>
+        </div>
+        <input type="range" id="sliderMin" min="5000" max="150000" step="1000" value="5000" oninput="updatePrice()">
+        <input type="range" id="sliderMax" min="5000" max="150000" step="1000" value="150000" oninput="updatePrice()">
+      </div>
+      <div class="filter-section">
+        <label class="filter-label">🧠 RAM</label>
+        <div class="chip-group">
+          <div class="chip" onclick="toggleChip(this,'ram','4')">4GB</div>
+          <div class="chip" onclick="toggleChip(this,'ram','6')">6GB</div>
+          <div class="chip" onclick="toggleChip(this,'ram','8')">8GB</div>
+          <div class="chip" onclick="toggleChip(this,'ram','12')">12GB</div>
+          <div class="chip" onclick="toggleChip(this,'ram','16')">16GB</div>
+        </div>
+      </div>
+      <div class="filter-section">
+        <label class="filter-label">💾 Storage</label>
+        <div class="chip-group">
+          <div class="chip" onclick="toggleChip(this,'storage','64')">64GB</div>
+          <div class="chip" onclick="toggleChip(this,'storage','128')">128GB</div>
+          <div class="chip" onclick="toggleChip(this,'storage','256')">256GB</div>
+          <div class="chip" onclick="toggleChip(this,'storage','512')">512GB</div>
+        </div>
+      </div>
+      <div class="filter-section">
+        <label class="filter-label">⚙️ Processor</label>
+        <div class="chip-group">
+          <div class="chip" onclick="toggleChip(this,'chipset','snapdragon')">Snapdragon</div>
+          <div class="chip" onclick="toggleChip(this,'chipset','mediatek')">MediaTek</div>
+          <div class="chip" onclick="toggleChip(this,'chipset','apple')">Apple</div>
+          <div class="chip" onclick="toggleChip(this,'chipset','exynos')">Exynos</div>
+          <div class="chip" onclick="toggleChip(this,'chipset','google')">Tensor</div>
+        </div>
+      </div>
+      <div class="filter-section">
+        <label class="filter-label">📸 Min Camera</label>
+        <div class="chip-group">
+          <div class="chip" onclick="toggleChip(this,'camera_min','48')">48MP+</div>
+          <div class="chip" onclick="toggleChip(this,'camera_min','64')">64MP+</div>
+          <div class="chip" onclick="toggleChip(this,'camera_min','100')">100MP+</div>
+          <div class="chip" onclick="toggleChip(this,'camera_min','200')">200MP+</div>
+        </div>
+      </div>
+      <div class="filter-section">
+        <label class="filter-label">🔋 Battery</label>
+        <div class="chip-group">
+          <div class="chip" onclick="toggleChip(this,'battery_min','4000')">4000mAh+</div>
+          <div class="chip" onclick="toggleChip(this,'battery_min','5000')">5000mAh+</div>
+          <div class="chip" onclick="toggleChip(this,'battery_min','6000')">6000mAh+</div>
+        </div>
+      </div>
+      <div class="filter-section">
+        <label class="filter-label">📶 Network</label>
+        <div class="chip-group">
+          <div class="chip" onclick="toggleChip(this,'network','5g')">5G</div>
+          <div class="chip" onclick="toggleChip(this,'network','4g')">4G</div>
+        </div>
+      </div>
+      <button class="apply-btn" onclick="fetchPhones()">Apply Filters</button>
+      <button class="reset-btn" onclick="resetFilters()">Reset All</button>
+    </div>
+  </aside>
+
+  <div>
+    <!-- BROWSE -->
+    <div id="browseView">
+      <div class="offline-banner" id="offlineBanner">⚠️ Backend offline — showing cached data. Start Docker to enable live data.</div>
+      <div class="ai-banner">
+        <div class="ai-icon">🤖</div>
+        <div class="ai-text">
+          <h3>AI Recommendation</h3>
+          <p>Ask anything — "Best 5G phone under ₹20000 for gaming"</p>
+          <div class="ai-input-wrap">
+            <input class="ai-input" id="aiQuery" placeholder="e.g. Best camera phone under ₹30000..." onkeydown="if(event.key==='Enter')askAI()">
+            <button class="ai-btn" onclick="askAI()">Ask ✨</button>
+          </div>
+          <div id="aiThinking" style="display:none;margin-top:8px;font-size:12px;color:var(--text3)"><span class="dot"></span><span class="dot"></span><span class="dot"></span> AI thinking...</div>
+          <div class="ai-response" id="aiResponse"></div>
+        </div>
+      </div>
+      <div class="content-header">
+        <div class="result-count">Showing <strong id="resultCount">—</strong> phones</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select class="sort-select" id="sortSelect" onchange="fetchPhones()">
+            <option value="popular">Most Popular</option>
+            <option value="price_asc">Price ↑</option>
+            <option value="price_desc">Price ↓</option>
+            <option value="rating">Top Rated</option>
+            <option value="newest">Newest</option>
+          </select>
+          <div class="view-toggles">
+            <button class="view-btn active" onclick="setLayout('grid')">⊞</button>
+            <button class="view-btn" onclick="setLayout('list')">☰</button>
+          </div>
+        </div>
+      </div>
+      <div class="phone-grid" id="phoneGrid"></div>
+    </div>
+
+    <!-- COMPARE -->
+    <div id="compareView" style="display:none">
+      <div class="content-header">
+        <h2 style="font-family:Syne;font-size:20px;font-weight:700">Compare Phones</h2>
+        <button class="apply-btn" style="width:auto;padding:9px 18px" onclick="clearCompare()">Clear</button>
+      </div>
+      <div id="compareContent"></div>
+    </div>
+
+    <!-- WISHLIST -->
+    <div id="wishlistView" style="display:none">
+      <div class="content-header"><h2 style="font-family:Syne;font-size:20px;font-weight:700">My Wishlist</h2></div>
+      <div id="wishlistContent"></div>
+    </div>
+
+    <!-- DEALS -->
+    <div id="dealsView" style="display:none">
+      <div class="content-header"><h2 style="font-family:Syne;font-size:20px;font-weight:700">🔥 Hot Deals</h2></div>
+      <div class="phone-grid" id="dealsGrid"></div>
+    </div>
+  </div>
+</div>
+
+<div class="compare-bar" id="compareBar">
+  <div class="compare-slots" id="compareSlots"></div>
+  <button class="compare-now-btn" id="compareNowBtn" onclick="showView('compare')" disabled>Compare Now</button>
+  <button class="reset-btn" style="width:auto;padding:8px 14px" onclick="clearCompare()">Clear</button>
+</div>
+
+<div class="modal-overlay" id="detailModal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">Phone Details</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:5000/api'
+  : '/api';
+
+let allPhones = [], compareList = [], wishlist = new Set();
+let filters = {price_min:5000,price_max:150000,ram:[],storage:[],chipset:[],camera_min:null,battery_min:null,network:[],category:'',q:''};
+let currentLayout = 'grid';
+let currentView = 'browse';
+let searchTimer;
+
+// ── Fetch ──────────────────────────────────────────────────────────────────
+async function fetchPhones() {
+  const params = new URLSearchParams();
+  params.set('price_min', filters.price_min);
+  params.set('price_max', filters.price_max);
+  filters.ram.forEach(v => params.append('ram', v));
+  filters.storage.forEach(v => params.append('storage', v));
+  filters.chipset.forEach(v => params.append('chipset', v));
+  if (filters.camera_min) params.set('camera_min', filters.camera_min);
+  if (filters.battery_min) params.set('battery_min', filters.battery_min);
+  filters.network.forEach(v => params.append('network', v));
+  if (filters.category && filters.category !== 'all') params.set('category', filters.category);
+  if (filters.q) params.set('q', filters.q);
+  params.set('sort', document.getElementById('sortSelect').value);
+
+  showSkeleton();
+  try {
+    const res = await fetch(`${API}/phones?${params}`);
+    if (!res.ok) throw new Error();
+    allPhones = await res.json();
+    document.getElementById('offlineBanner').classList.remove('show');
+    renderPhones(allPhones);
+  } catch {
+    document.getElementById('offlineBanner').classList.add('show');
+    renderPhones(allPhones.length ? allPhones : FALLBACK);
+  }
+}
+
+async function fetchPhone(id) {
+  try {
+    const res = await fetch(`${API}/phones/${id}`);
+    return await res.json();
+  } catch { return allPhones.find(p=>p._id===id||p.id===id)||null; }
+}
+
+// ── Render ─────────────────────────────────────────────────────────────────
+function showSkeleton() {
+  const grid = document.getElementById('phoneGrid');
+  grid.innerHTML = Array(8).fill('<div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden"><div style="height:190px" class="skeleton"></div><div style="padding:14px"><div class="skeleton" style="height:10px;width:60%;margin-bottom:8px"></div><div class="skeleton" style="height:16px;width:90%;margin-bottom:10px"></div><div class="skeleton" style="height:10px;width:40%"></div></div></div>').join('');
+}
+
+function renderPhones(list) {
+  document.getElementById('resultCount').textContent = list.length;
+  const grid = document.getElementById('phoneGrid');
+  if (!list.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text3)"><div style="font-size:48px;margin-bottom:14px">📭</div><p>No phones found</p></div>';
+    return;
+  }
+  grid.innerHTML = list.map(phoneCard).join('');
+}
+
+function phoneCard(p) {
+  const id = p._id || p.id;
+  const pct = p.oldPrice > p.price ? Math.round((p.oldPrice-p.price)/p.oldPrice*100) : 0;
+  const inC = compareList.some(c=>(c._id||c.id)===id);
+  const inW = wishlist.has(String(id));
+  const badgeMap = {new:'✨ New',bestseller:'🏆 Bestseller',deal:'🔥 Deal'};
+  return `<div class="phone-card${inC?' in-compare':''}" id="card-${id}">
+    <div class="card-badge"><span class="badge-pill ${p.badge}">${badgeMap[p.badge]||''}</span></div>
+    <div class="card-actions">
+      <button class="card-action-btn" onclick="toggleWish('${id}',event)">${inW?'❤️':'🤍'}</button>
+      <button class="card-action-btn" onclick="toggleCompare('${id}',event)">⚖️</button>
+    </div>
+    <div class="card-img" onclick="openDetail('${id}')">
+      <img src="${p.img}" alt="${p.name}" onerror="this.style.display='none'">
+    </div>
+    <div class="card-body">
+      <div class="card-brand">${p.brand}</div>
+      <div class="card-name" onclick="openDetail('${id}')">${p.name}</div>
+      <div class="card-specs">
+        <span class="spec-tag">${p.ram}GB RAM</span>
+        <span class="spec-tag">${p.storage}GB</span>
+        <span class="spec-tag">${p.camera}MP</span>
+        ${p.network==='5g'?'<span class="spec-tag" style="color:var(--green);background:var(--green-bg)">5G</span>':''}
+      </div>
+      <div class="card-rating">
+        <span class="stars">★</span>
+        <span class="rating-num">${p.rating}</span>
+        <span class="rating-count">(${(p.reviews||0).toLocaleString()})</span>
+      </div>
+      <div class="card-price-section">
+        <div class="price-row">
+          <span class="price-main">₹${p.price.toLocaleString('en-IN')}</span>
+          ${pct?`<span class="price-old">₹${p.oldPrice.toLocaleString('en-IN')}</span><span class="price-drop">↓${pct}%</span>`:''}
+        </div>
+        <div class="buy-links">
+          ${p.amazon?`<a class="buy-link amazon" href="${p.amazon}" target="_blank" onclick="event.stopPropagation()"><span class="store-dot" style="background:#ff9900"></span>Amazon</a>`:''}
+          ${p.flipkart?`<a class="buy-link flipkart" href="${p.flipkart}" target="_blank" onclick="event.stopPropagation()"><span class="store-dot" style="background:#2874f0"></span>Flipkart</a>`:''}
+          ${p.croma?`<a class="buy-link croma" href="${p.croma}" target="_blank" onclick="event.stopPropagation()"><span class="store-dot" style="background:#67b346"></span>Croma</a>`:''}
+          ${p.reliance?`<a class="buy-link reliance" href="${p.reliance}" target="_blank" onclick="event.stopPropagation()"><span class="store-dot" style="background:#c00"></span>Reliance</a>`:''}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── Detail Modal ───────────────────────────────────────────────────────────
+async function openDetail(id) {
+  const p = allPhones.find(ph=>(ph._id||ph.id)==id) || await fetchPhone(id);
+  if (!p) return;
+  const pct = p.oldPrice > p.price ? Math.round((p.oldPrice-p.price)/p.oldPrice*100) : 0;
+  const maxH = Math.max(...(p.priceHistory||[p.price]));
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const now = new Date().getMonth();
+  const history = p.priceHistory || [p.price];
+  const bars = history.map((pr,i)=>{
+    const h = Math.round((pr/maxH)*72);
+    const m = months[(now-(history.length-1-i)+12)%12];
+    return `<div class="chart-bar-group"><div class="chart-bar" style="height:${h}px;background:${i===history.length-1?'var(--green)':'var(--accent)'}"></div><div class="chart-label">${m}</div></div>`;
+  }).join('');
+  const specHtml = p.specs ? Object.entries(p.specs).map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join('') : '';
+  document.getElementById('modalTitle').textContent = `${p.brand} ${p.name}`;
+  document.getElementById('modalBody').innerHTML = `
+    <div class="detail-grid">
+      <div class="detail-img"><img src="${p.img}" alt="${p.name}" onerror="this.style.display='none'"></div>
+      <div>
+        <div class="detail-brand">${p.brand}</div>
+        <div class="detail-name">${p.name}</div>
+        <div class="card-rating" style="margin-bottom:10px"><span class="stars">★</span><strong>${p.rating}</strong><span style="color:var(--text3);font-size:12px;margin-left:4px">(${(p.reviews||0).toLocaleString()} reviews)</span></div>
+        <div class="detail-price">₹${p.price.toLocaleString('en-IN')}</div>
+        <div class="price-meta">
+          ${pct?`<span style="color:var(--text3);text-decoration:line-through;font-size:14px">₹${p.oldPrice.toLocaleString('en-IN')}</span><span class="price-drop">↓ ${pct}% off</span>`:''}
+          <span style="font-size:11px;color:var(--green)">✓ Live price tracked</span>
+        </div>
+        <div class="detail-buy-links">
+          ${p.amazon?`<a class="detail-buy-link" href="${p.amazon}" target="_blank"><span style="width:7px;height:7px;border-radius:50%;background:#ff9900;display:inline-block"></span> Amazon India</a>`:''}
+          ${p.flipkart?`<a class="detail-buy-link" href="${p.flipkart}" target="_blank"><span style="width:7px;height:7px;border-radius:50%;background:#2874f0;display:inline-block"></span> Flipkart</a>`:''}
+          ${p.croma?`<a class="detail-buy-link" href="${p.croma}" target="_blank"><span style="width:7px;height:7px;border-radius:50%;background:#67b346;display:inline-block"></span> Croma</a>`:''}
+          ${p.reliance?`<a class="detail-buy-link" href="${p.reliance}" target="_blank"><span style="width:7px;height:7px;border-radius:50%;background:#c00;display:inline-block"></span> Reliance Digital</a>`:''}
+        </div>
+        <div style="display:flex;gap:7px;margin-bottom:16px">
+          <button onclick="toggleWish('${p._id||p.id}')" style="flex:1;padding:9px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);cursor:pointer;font-size:12px">🤍 Wishlist</button>
+          <button onclick="toggleCompare('${p._id||p.id}');closeModal()" style="flex:1;padding:9px;background:var(--accent-glow);border:1px solid rgba(108,99,255,.3);border-radius:8px;color:var(--accent2);cursor:pointer;font-size:12px">⚖️ Compare</button>
+        </div>
+      </div>
+    </div>
+    ${specHtml?`<div style="margin-top:20px"><div style="font-weight:600;font-size:14px;margin-bottom:10px;font-family:Syne">Full Specifications</div><table class="spec-table">${specHtml}</table></div>`:''}
+    <div style="margin-top:18px"><div style="font-size:13px;font-weight:600;margin-bottom:8px">📈 Price History</div><div class="price-history-chart">${bars}</div></div>`;
+  document.getElementById('detailModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal() {
+  document.getElementById('detailModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// ── Filters ────────────────────────────────────────────────────────────────
+function toggleChip(el, type, val) {
+  el.classList.toggle('active');
+  if (!Array.isArray(filters[type])) filters[type] = null;
+  if (type === 'camera_min' || type === 'battery_min') {
+    document.querySelectorAll(`[onclick*="'${type}'"]`).forEach(c => { if(c!==el) c.classList.remove('active'); });
+    filters[type] = el.classList.contains('active') ? val : null;
+  } else {
+    if (!Array.isArray(filters[type])) filters[type] = [];
+    if (el.classList.contains('active')) { if(!filters[type].includes(val)) filters[type].push(val); }
+    else { filters[type] = filters[type].filter(v=>v!==val); }
+  }
+}
+function updatePrice() {
+  const mn = parseInt(document.getElementById('sliderMin').value);
+  const mx = parseInt(document.getElementById('sliderMax').value);
+  filters.price_min = Math.min(mn,mx); filters.price_max = Math.max(mn,mx);
+  document.getElementById('pMin').textContent = filters.price_min.toLocaleString('en-IN');
+  document.getElementById('pMax').textContent = filters.price_max.toLocaleString('en-IN');
+}
+function resetFilters() {
+  filters = {price_min:5000,price_max:150000,ram:[],storage:[],chipset:[],camera_min:null,battery_min:null,network:[],category:'',q:''};
+  document.getElementById('sliderMin').value = 5000;
+  document.getElementById('sliderMax').value = 150000;
+  document.getElementById('pMin').textContent = '5,000';
+  document.getElementById('pMax').textContent = '1,50,000';
+  document.querySelectorAll('.chip.active').forEach(c=>c.classList.remove('active'));
+  document.getElementById('searchInput').value = '';
+  fetchPhones();
+}
+function filterCat(cat, el) {
+  document.querySelectorAll('.cat-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  filters.category = cat;
+  fetchPhones();
+}
+
+// ── Search ─────────────────────────────────────────────────────────────────
+document.getElementById('searchInput').addEventListener('input', function() {
+  filters.q = this.value;
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(fetchPhones, 350);
+  if (this.value.length > 1) fetchSuggestions(this.value);
+  else document.getElementById('suggestBox').style.display = 'none';
+});
+async function fetchSuggestions(q) {
+  try {
+    const res = await fetch(`${API}/phones/search/suggest?q=${encodeURIComponent(q)}`);
+    const list = await res.json();
+    const box = document.getElementById('suggestBox');
+    if (!list.length) { box.style.display='none'; return; }
+    box.innerHTML = list.map(s=>`<div class="suggest-item" onclick="selectSuggest('${s.label}')">${s.label}</div>`).join('');
+    box.style.display = 'block';
+  } catch {}
+}
+function selectSuggest(label) {
+  document.getElementById('searchInput').value = label;
+  document.getElementById('suggestBox').style.display = 'none';
+  filters.q = label; fetchPhones();
+}
+document.addEventListener('click', e => { if (!e.target.closest('.search-wrap')) document.getElementById('suggestBox').style.display='none'; });
+
+// ── Compare ────────────────────────────────────────────────────────────────
+function toggleCompare(id, e) {
+  if (e) e.stopPropagation();
+  const p = allPhones.find(ph=>(ph._id||ph.id)==id);
+  if (!p) return;
+  const idx = compareList.findIndex(c=>(c._id||c.id)==id);
+  if (idx>-1) { compareList.splice(idx,1); showToast('Removed from compare'); }
+  else {
+    if (compareList.length>=3) { showToast('Max 3 phones to compare'); return; }
+    compareList.push(p); showToast(`Added ${p.name} to compare`);
+  }
+  updateCompareBar();
+  document.querySelectorAll(`#card-${id}`).forEach(c=>c.classList.toggle('in-compare',compareList.some(x=>(x._id||x.id)==id)));
+}
+function updateCompareBar() {
+  const bar = document.getElementById('compareBar');
+  bar.classList.toggle('visible', compareList.length>0);
+  const slots = compareList.map(p=>`<div class="compare-slot filled">${p.brand} ${p.name}<button class="remove-slot" onclick="toggleCompare('${p._id||p.id}')">✕</button></div>`);
+  const empty = Array(Math.max(0,2-compareList.length)).fill('<div class="compare-slot"><span class="compare-slot-empty">+ Add phone</span></div>');
+  document.getElementById('compareSlots').innerHTML = [...slots,...empty].join('');
+  document.getElementById('compareNowBtn').disabled = compareList.length < 2;
+}
+function clearCompare() {
+  compareList = []; updateCompareBar();
+  document.querySelectorAll('.phone-card').forEach(c=>c.classList.remove('in-compare'));
+  if (currentView==='compare') renderCompare();
+}
+function renderCompare() {
+  const el = document.getElementById('compareContent');
+  if (compareList.length<2) {
+    el.innerHTML='<div style="text-align:center;padding:60px;color:var(--text3)"><div style="font-size:48px;margin-bottom:14px">⚖️</div><p>Add at least 2 phones to compare</p></div>';
+    return;
+  }
+  const cols = `160px ${compareList.map(()=>'1fr').join(' ')}`;
+  const rows = [['Price','price'],['RAM','ram'],['Storage','storage'],['Camera','camera'],['Battery','battery'],['Display','display'],['Rating','rating']];
+  const best = {}; rows.forEach(([,k])=>{const ns=compareList.map(p=>typeof p[k]==='number'?p[k]:null).filter(v=>v!==null);if(ns.length)best[k]=Math.max(...ns);});
+  el.innerHTML=`<div style="overflow-x:auto"><div style="display:grid;grid-template-columns:${cols};gap:1px;background:var(--border);border-radius:12px;overflow:hidden;min-width:400px">
+    <div style="background:var(--bg3);padding:14px 12px;font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase">Spec</div>
+    ${compareList.map(p=>`<div style="background:var(--bg2);padding:12px"><img src="${p.img}" style="width:50px;height:65px;object-fit:contain;display:block;margin-bottom:6px" onerror="this.style.display='none'"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;font-weight:600">${p.brand}</div><div style="font-family:Syne;font-size:13px;font-weight:700">${p.name}</div></div>`).join('')}
+    ${rows.map(([label,k])=>`
+      <div style="background:var(--bg3);padding:10px 12px;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase">${label}</div>
+      ${compareList.map(p=>{const v=p[k];const d=k==='price'?`₹${v.toLocaleString('en-IN')}`:k==='ram'||k==='storage'?`${v}GB`:k==='camera'?`${v}MP`:k==='battery'?`${v}mAh`:v;const best_=typeof v==='number'&&best[k]!==undefined&&v===best[k]&&k!=='price';const cheap=k==='price'&&v===Math.min(...compareList.map(x=>x.price));return`<div style="background:var(--bg2);padding:10px 12px;font-size:12px;font-weight:500;color:${best_||cheap?'var(--green)':'var(--text)'}">${d}</div>`}).join('')}
+    `).join('')}
+  </div></div>`;
+}
+
+// ── Wishlist ───────────────────────────────────────────────────────────────
+function toggleWish(id, e) {
+  if (e) e.stopPropagation();
+  const p = allPhones.find(ph=>(ph._id||ph.id)==id);
+  const sid = String(id);
+  if (wishlist.has(sid)) { wishlist.delete(sid); showToast('Removed from wishlist'); }
+  else { wishlist.add(sid); showToast(`Added ${p?.name||''} to wishlist ❤️`); }
+  const badge = document.getElementById('wishBadge');
+  badge.style.display = wishlist.size?'':'none';
+  badge.textContent = wishlist.size;
+  if (currentView==='wishlist') renderWishlist();
+}
+function renderWishlist() {
+  const el = document.getElementById('wishlistContent');
+  const list = allPhones.filter(p=>wishlist.has(String(p._id||p.id)));
+  if (!list.length) { el.innerHTML='<div style="text-align:center;padding:60px;color:var(--text3)"><div style="font-size:48px;margin-bottom:14px">🤍</div><p>Your wishlist is empty</p></div>'; return; }
+  el.innerHTML=`<div class="phone-grid">${list.map(phoneCard).join('')}</div>`;
+}
+
+// ── Deals ──────────────────────────────────────────────────────────────────
+function renderDeals() {
+  const deals = allPhones.filter(p=>p.badge==='deal'||(p.oldPrice&&(p.oldPrice-p.price)/p.oldPrice>0.1));
+  document.getElementById('dealsGrid').innerHTML = deals.map(phoneCard).join('');
+}
+
+// ── Views ──────────────────────────────────────────────────────────────────
+function showView(v) {
+  ['browse','compare','wishlist','deals'].forEach((name,i)=>{
+    document.getElementById(`${name}View`).style.display = name===v?'':'none';
+    document.querySelectorAll('.nav-tab')[i]?.classList.toggle('active',name===v);
+  });
+  currentView = v;
+  if (v==='compare') renderCompare();
+  if (v==='wishlist') renderWishlist();
+  if (v==='deals') renderDeals();
+}
+function setLayout(t) {
+  currentLayout=t;
+  document.getElementById('phoneGrid').classList.toggle('list',t==='list');
+  document.querySelectorAll('.view-btn').forEach((b,i)=>b.classList.toggle('active',['grid','list'][i]===t));
+}
+
+// ── AI ─────────────────────────────────────────────────────────────────────
+async function askAI() {
+  const query = document.getElementById('aiQuery').value.trim();
+  if (!query) return;
+  const thinking = document.getElementById('aiThinking');
+  const resp = document.getElementById('aiResponse');
+  thinking.style.display='block'; resp.classList.remove('show');
+  try {
+    const res = await fetch(`${API}/ai/recommend`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({query})
+    });
+    if (!res.ok) throw new Error('AI request failed');
+    const data = await res.json();
+    resp.textContent = data.answer || 'Could not generate recommendation.';
+    resp.classList.add('show');
+  } catch { resp.textContent='AI unavailable. Please try later.'; resp.classList.add('show'); }
+  thinking.style.display='none';
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ── Theme ──────────────────────────────────────────────────────────────────
+document.getElementById('themeToggle').addEventListener('click',function(){
+  const light = document.documentElement.getAttribute('data-theme')==='light';
+  document.documentElement.setAttribute('data-theme',light?'':'light');
+  this.textContent=light?'🌙':'☀️';
+});
+
+// ── Fallback data (when backend offline) ──────────────────────────────────
+const FALLBACK = [];
+
+// ── Init ───────────────────────────────────────────────────────────────────
+fetchPhones();
+</script>
+</body>
+</html>
