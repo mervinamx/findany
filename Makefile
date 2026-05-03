@@ -15,11 +15,8 @@ up: ## Start all services
 down: ## Stop all services
 	docker-compose down
 
-test: ## Run tests
-	docker-compose -f docker-compose.test.yml up -d
-	sleep 30
-	docker-compose -f docker-compose.test.yml exec backend pytest
-	docker-compose -f docker-compose.test.yml down -v
+test: ## Run tests locally
+	cd backend && bash test.sh
 
 clean: ## Clean up containers and volumes
 	docker-compose down -v
