@@ -1,0 +1,23 @@
+version: "3.9"
+
+services:
+  mysql:
+    environment:
+      MYSQL_ROOT_PASSWORD: test_root
+      MYSQL_DATABASE: findany_test
+      MYSQL_USER: test_user
+      MYSQL_PASSWORD: test_pass
+    ports:
+      - "3307:3306"  # Use different port for tests
+
+  backend:
+    environment:
+      DATABASE_URL: mysql+pymysql://test_user:test_pass@mysql/findany_test
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-test_key}
+      FLASK_ENV: testing
+    ports:
+      - "5001:5000"  # Use different port for tests
+
+  frontend:
+    ports:
+      - "3001:80"  # Use different port for tests
