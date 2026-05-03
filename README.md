@@ -53,6 +53,59 @@ docker compose down -v && docker compose up --build
 
 ---
 
+## CI/CD Pipeline
+
+This project uses GitHub Actions for automated testing, building, and deployment.
+
+### Pipeline Features
+
+- **Code Quality**: Python linting (flake8), formatting (black, isort), type checking (mypy)
+- **Testing**: Unit tests with pytest and coverage reporting
+- **Security**: Vulnerability scanning with Trivy
+- **Docker**: Automated image building and pushing to GitHub Container Registry
+- **Integration**: Full Docker Compose testing
+- **Performance**: Lighthouse CI for frontend performance monitoring
+
+### Workflow Triggers
+
+- **Push to main/develop**: Full CI/CD pipeline
+- **Pull Requests**: Code quality checks and testing
+
+### Local Development Commands
+
+```bash
+# Run tests locally
+make test
+
+# Lint code
+make lint
+
+# Format code
+make format
+
+# Build and start services
+make build && make up
+
+# View logs
+make logs
+
+# Clean up
+make clean
+```
+
+### Deployment Environments
+
+- **Staging**: Automatic deployment from `develop` branch
+- **Production**: Automatic deployment from `main` branch
+
+### Container Images
+
+Built images are available at:
+- Backend: `ghcr.io/mervinamx/findany/backend`
+- Frontend: `ghcr.io/mervinamx/findany/frontend`
+
+---
+
 ## Database — MySQL
 
 The SQL file `database/findany.sql` is auto-loaded by MySQL on first start.
