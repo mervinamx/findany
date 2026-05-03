@@ -1,96 +1,157 @@
+import json
+import os
+import re
+import urllib.error
+import urllib.request
+
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
-import os
-import json
-import urllib.error
-import urllib.request
 
 app = Flask(__name__)
 CORS(app)
 
 MYSQL_URI = os.environ.get("DATABASE_URL")
 SQLITE_URI = "sqlite:///findany.db"
+
 app.config["SQLALCHEMY_DATABASE_URI"] = MYSQL_URI or SQLITE_URI
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
 db = SQLAlchemy(app)
+
 
 class Brand(db.Model):
     __tablename__ = "brands"
-    id      = db.Column(db.Integer, primary_key=True)
-    name    = db.Column(db.String(80), unique=True, nullable=False)
-    slug    = db.Column(db.String(80), unique=True, nullable=False)
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), unique=True, nullable=False)
+    slug = db.Column(db.String(80), unique=True, nullable=False)
     country = db.Column(db.String(80))
     website = db.Column(db.String(255))
 
+
 class Phone(db.Model):
     __tablename__ = "phones"
-    id           = db.Column(db.Integer, primary_key=True)
-    brand_id     = db.Column(db.Integer, db.ForeignKey("brands.id"), nullable=False)
-    name         = db.Column(db.String(150), nullable=False)
-    slug         = db.Column(db.String(150), unique=True)
-    img          = db.Column(db.String(500))
-    badge        = db.Column(db.String(20), default="new")
-    price        = db.Column(db.Integer, nullable=False)
-    old_price    = db.Column(db.Integer)
-    ram          = db.Column(db.SmallInteger)
-    storage      = db.Column(db.SmallInteger)
-    camera       = db.Column(db.SmallInteger)
-    battery      = db.Column(db.SmallInteger)
-    display      = db.Column(db.String(120))
-    chipset      = db.Column(db.String(60))
-    network      = db.Column(db.String(10), default="5g")
-    rating       = db.Column(db.Numeric(2,1), default=0.0)
+
+    id = db.Column(db.Integer, primary_key=True)
+    brand_id = db.Column(db.Integer, db.ForeignKey("brands.id"), nullable=False)
+    name = db.Column(db.String(150), nullable=False)
+    slug = db.Column(db.String(150), unique=True)
+    img = db.Column(db.String(500))
+    badge = db.Column(db.String(20), default="new")
+    price = db.Column(db.Integer, nullable=False)
+    old_price = db.Column(db.Integer)
+    ram = db.Column(db.SmallInteger)
+    storage = db.Column(db.SmallInteger)
+    camera = db.Column(db.SmallInteger)
+    battery = db.Column(db.SmallInteger)
+    display = db.Column(db.String(120))
+    chipset = db.Column(db.String(60))
+    network = db.Column(db.String(10), default="5g")
+    rating = db.Column(db.Numeric(2, 1), default=0.0)
     review_count = db.Column(db.Integer, default=0)
-    amazon_url   = db.Column(db.String(500))
+    amazon_url = db.Column(db.String(500))
     flipkart_url = db.Column(db.String(500))
-    croma_url    = db.Column(db.String(500))
+    croma_url = db.Column(db.String(500))
     reliance_url = db.Column(db.String(500))
-    brand        = db.relationship("Brand", backref="phones")
+
+    brand = db.relationship("Brand", backref="phones")
+
 
 class PhoneCategory(db.Model):
     __tablename__ = "phone_categories"
+
     phone_id = db.Column(db.Integer, db.ForeignKey("phones.id"), primary_key=True)
     category = db.Column(db.String(40), primary_key=True)
 
+
 class PhoneSpec(db.Model):
     __tablename__ = "phone_specs"
-    id       = db.Column(db.Integer, primary_key=True)
+
+    id = db.Column(db.Integer, primary_key=True)
     phone_id = db.Column(db.Integer, db.ForeignKey("phones.id"))
     spec_key = db.Column(db.String(100))
     spec_val = db.Column(db.Text)
 
+
 class PriceHistory(db.Model):
     __tablename__ = "price_history"
-    id          = db.Column(db.Integer, primary_key=True)
-    phone_id    = db.Column(db.Integer, db.ForeignKey("phones.id"))
-    price       = db.Column(db.Integer)
+
+    id = db.Column(db.Integer, primary_key=True)
+    phone_id = db.Column(db.Integer, db.ForeignKey("phones.id"))
+    price = db.Column(db.Integer)
     recorded_at = db.Column(db.DateTime, server_default=db.func.now())
 
-def serialize_phone(p, cats=None, specs=None, history=None):
+
+def serialize_phone(phone, cats=None, specs=None, history=None):
+    old_price = phone.old_price
+    price = phone.price
+    discount_pct = (
+        round((old_price - price) * 100 / old_price, 1)
+        if old_price and old_price > price
+        else 0
+    )
+
     return {
-        "id": p.id, "brand": p.brand.name if p.brand else "",
-        "name": p.name, "slug": p.slug, "img": p.img, "badge": p.badge,
-        "price": p.price, "oldPrice": p.old_price,
-        "discount_pct": round((p.old_price-p.price)*100/p.old_price,1) if p.old_price and p.old_price>p.price else 0,
-        "ram": p.ram, "storage": p.storage, "camera": p.camera,
-        "battery": p.battery, "display": p.display, "chipset": p.chipset,
-        "network": p.network, "rating": float(p.rating) if p.rating else 0.0,
-        "reviews": p.review_count, "category": cats or [],
-        "amazon": p.amazon_url, "flipkart": p.flipkart_url,
-        "croma": p.croma_url, "reliance": p.reliance_url,
-        "specs": specs or {}, "priceHistory": history or [],
+        "id": phone.id,
+        "brand": phone.brand.name if phone.brand else "",
+        "name": phone.name,
+        "slug": phone.slug,
+        "img": phone.img,
+        "badge": phone.badge,
+        "price": price,
+        "oldPrice": old_price,
+        "discount_pct": discount_pct,
+        "ram": phone.ram,
+        "storage": phone.storage,
+        "camera": phone.camera,
+        "battery": phone.battery,
+        "display": phone.display,
+        "chipset": phone.chipset,
+        "network": phone.network,
+        "rating": float(phone.rating) if phone.rating else 0.0,
+        "reviews": phone.review_count,
+        "category": cats or [],
+        "amazon": phone.amazon_url,
+        "flipkart": phone.flipkart_url,
+        "croma": phone.croma_url,
+        "reliance": phone.reliance_url,
+        "specs": specs or {},
+        "priceHistory": history or [],
     }
 
-def get_cats(pid):    return [r.category for r in PhoneCategory.query.filter_by(phone_id=pid).all()]
-def get_specs(pid):   return {r.spec_key: r.spec_val for r in PhoneSpec.query.filter_by(phone_id=pid).all()}
-def get_history(pid): return [r.price for r in PriceHistory.query.filter_by(phone_id=pid).order_by(PriceHistory.recorded_at).all()]
+
+def get_cats(phone_id):
+    return [
+        row.category
+        for row in PhoneCategory.query.filter_by(phone_id=phone_id).all()
+    ]
+
+
+def get_specs(phone_id):
+    return {
+        row.spec_key: row.spec_val
+        for row in PhoneSpec.query.filter_by(phone_id=phone_id).all()
+    }
+
+
+def get_history(phone_id):
+    return [
+        row.price
+        for row in PriceHistory.query.filter_by(phone_id=phone_id)
+        .order_by(PriceHistory.recorded_at)
+        .all()
+    ]
+
 
 def parse_budget(query):
-    import re
     text = query.lower().replace(",", "")
-    match = re.search(r"(?:under|below|less than|upto|up to|within)\s*(?:rs\.?|inr|₹)?\s*(\d+)", text)
+    match = re.search(
+        r"(?:under|below|less than|upto|up to|within)\s*(?:rs\.?|inr|₹)?\s*(\d+)",
+        text,
+    )
     return int(match.group(1)) if match else None
+
 
 def score_phone(phone, query, budget):
     text = query.lower()
@@ -104,39 +165,67 @@ def score_phone(phone, query, budget):
             score -= min(40, (phone.price - budget) / max(budget, 1) * 60)
 
     if "gaming" in text:
-        if phone.ram and phone.ram >= 8: score += 10
-        if phone.chipset and any(k in phone.chipset.lower() for k in ["snapdragon", "dimensity"]): score += 8
+        if phone.ram and phone.ram >= 8:
+            score += 10
+        if phone.chipset and any(
+            keyword in phone.chipset.lower()
+            for keyword in ["snapdragon", "dimensity"]
+        ):
+            score += 8
+
     if "camera" in text or "photo" in text:
         score += min(phone.camera or 0, 200) / 10
+
     if "battery" in text or "long" in text:
         score += (phone.battery or 0) / 600
+
     if "5g" in text and phone.network == "5g":
         score += 12
+
     if "cheap" in text or "budget" in text or "value" in text:
         score += max(0, 150000 - phone.price) / 10000
 
     return score
 
+
 def local_recommendation(query):
     budget = parse_budget(query)
     phones = Phone.query.join(Brand).all()
-    ranked = sorted(phones, key=lambda p: score_phone(p, query, budget), reverse=True)[:3]
+    ranked = sorted(
+        phones,
+        key=lambda phone: score_phone(phone, query, budget),
+        reverse=True,
+    )[:3]
+
     if not ranked:
-        return "I could not find matching phones yet. Try asking with a budget, brand, or use case."
+        return (
+            "I could not find matching phones yet. Try asking with a budget, "
+            "brand, or use case."
+        )
 
     picks = []
-    for p in ranked:
-        reasons = [f"{p.brand.name} {p.name} at ₹{p.price:,}"]
-        if p.ram: reasons.append(f"{p.ram}GB RAM")
-        if p.camera: reasons.append(f"{p.camera}MP camera")
-        if p.battery: reasons.append(f"{p.battery}mAh battery")
-        if p.network: reasons.append(p.network.upper())
+    for phone in ranked:
+        reasons = [f"{phone.brand.name} {phone.name} at ₹{phone.price:,}"]
+        if phone.ram:
+            reasons.append(f"{phone.ram}GB RAM")
+        if phone.camera:
+            reasons.append(f"{phone.camera}MP camera")
+        if phone.battery:
+            reasons.append(f"{phone.battery}mAh battery")
+        if phone.network:
+            reasons.append(phone.network.upper())
         picks.append(", ".join(reasons))
 
     lead = "Based on your query"
     if budget:
         lead += f" under ₹{budget:,}"
-    return f"{lead}, I would shortlist {picks[0]}. Also consider {picks[1]} and {picks[2]}. These are ranked from the available FindAny catalog by price fit, rating, and the specs mentioned in your request."
+
+    return (
+        f"{lead}, I would shortlist {picks[0]}. Also consider {picks[1]} and "
+        f"{picks[2]}. These are ranked from the available FindAny catalog by "
+        "price fit, rating, and the specs mentioned in your request."
+    )
+
 
 def claude_recommendation(query):
     api_key = os.environ.get("ANTHROPIC_API_KEY")
@@ -145,22 +234,27 @@ def claude_recommendation(query):
 
     phones = Phone.query.join(Brand).order_by(Phone.review_count.desc()).limit(20).all()
     summary = "\n".join(
-        f"{p.brand.name} {p.name}: ₹{p.price:,}, {p.ram}GB RAM, {p.storage}GB, "
-        f"{p.camera}MP, {p.battery}mAh, {p.chipset}, rating {float(p.rating or 0)}"
-        for p in phones
+        (
+            f"{phone.brand.name} {phone.name}: ₹{phone.price:,}, {phone.ram}GB RAM, "
+            f"{phone.storage}GB, {phone.camera}MP, {phone.battery}mAh, "
+            f"{phone.chipset}, rating {float(phone.rating or 0)}"
+        )
+        for phone in phones
     )
     payload = {
         "model": os.environ.get("ANTHROPIC_MODEL", "claude-3-5-sonnet-20241022"),
         "max_tokens": 500,
-        "messages": [{
-            "role": "user",
-            "content": (
-                "You are FindAny's AI assistant for Indian smartphone buyers. "
-                f"Query: \"{query}\"\n\nAvailable phones:\n{summary}\n\n"
-                "Give a concise recommendation in 3-4 sentences. Mention specific phones. "
-                "Use INR prices. Plain text, no markdown."
-            )
-        }]
+        "messages": [
+            {
+                "role": "user",
+                "content": (
+                    "You are FindAny's AI assistant for Indian smartphone buyers. "
+                    f'Query: "{query}"\n\nAvailable phones:\n{summary}\n\n'
+                    "Give a concise recommendation in 3-4 sentences. Mention "
+                    "specific phones. Use INR prices. Plain text, no markdown."
+                ),
+            }
+        ],
     }
     req = urllib.request.Request(
         "https://api.anthropic.com/v1/messages",
@@ -172,121 +266,240 @@ def claude_recommendation(query):
         },
         method="POST",
     )
+
     try:
-        with urllib.request.urlopen(req, timeout=20) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
+        with urllib.request.urlopen(req, timeout=20) as response:
+            data = json.loads(response.read().decode("utf-8"))
             return data.get("content", [{}])[0].get("text")
-    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, KeyError, IndexError, json.JSONDecodeError):
+    except (
+        urllib.error.URLError,
+        urllib.error.HTTPError,
+        TimeoutError,
+        KeyError,
+        IndexError,
+        json.JSONDecodeError,
+    ):
         return None
 
+
 def seed_sqlite():
-    import json
-    if Brand.query.count() > 0: return
+    if Brand.query.count() > 0:
+        return
+
     seed_path = os.path.join(os.path.dirname(__file__), "..", "database", "phones.json")
-    if not os.path.exists(seed_path): return
-    with open(seed_path) as f: data = json.load(f)
+    if not os.path.exists(seed_path):
+        return
+
+    with open(seed_path, encoding="utf-8") as file_obj:
+        data = json.load(file_obj)
+
     brand_cache = {}
-    for p in data:
-        bname = p["brand"]
-        if bname not in brand_cache:
-            b = Brand(name=bname, slug=bname.lower().replace(" ","-"))
-            db.session.add(b); db.session.flush()
-            brand_cache[bname] = b.id
-        ph = Phone(brand_id=brand_cache[bname], name=p["name"],
-            slug=f"{bname}-{p['name']}".lower().replace(" ","-").replace("/","-"),
-            img=p.get("img"), badge=p.get("badge","new"),
-            price=p["price"], old_price=p.get("oldPrice"),
-            ram=p["ram"], storage=p["storage"], camera=p["camera"],
-            battery=p["battery"], display=p.get("display"), chipset=p.get("chipset"),
-            network=p.get("network","5g"), rating=p.get("rating",0),
-            review_count=p.get("reviews",0),
-            amazon_url=p.get("amazon"), flipkart_url=p.get("flipkart"),
-            croma_url=p.get("croma"), reliance_url=p.get("reliance"))
-        db.session.add(ph); db.session.flush()
-        for cat in p.get("category",[]): db.session.add(PhoneCategory(phone_id=ph.id,category=cat))
-        for k,v in (p.get("specs") or {}).items(): db.session.add(PhoneSpec(phone_id=ph.id,spec_key=k,spec_val=v))
-        for price in p.get("priceHistory",[]): db.session.add(PriceHistory(phone_id=ph.id,price=price))
+    for phone in data:
+        brand_name = phone["brand"]
+        if brand_name not in brand_cache:
+            brand = Brand(
+                name=brand_name,
+                slug=brand_name.lower().replace(" ", "-"),
+            )
+            db.session.add(brand)
+            db.session.flush()
+            brand_cache[brand_name] = brand.id
+
+        new_phone = Phone(
+            brand_id=brand_cache[brand_name],
+            name=phone["name"],
+            slug=(
+                f"{brand_name}-{phone['name']}"
+                .lower()
+                .replace(" ", "-")
+                .replace("/", "-")
+            ),
+            img=phone.get("img"),
+            badge=phone.get("badge", "new"),
+            price=phone["price"],
+            old_price=phone.get("oldPrice"),
+            ram=phone["ram"],
+            storage=phone["storage"],
+            camera=phone["camera"],
+            battery=phone["battery"],
+            display=phone.get("display"),
+            chipset=phone.get("chipset"),
+            network=phone.get("network", "5g"),
+            rating=phone.get("rating", 0),
+            review_count=phone.get("reviews", 0),
+            amazon_url=phone.get("amazon"),
+            flipkart_url=phone.get("flipkart"),
+            croma_url=phone.get("croma"),
+            reliance_url=phone.get("reliance"),
+        )
+        db.session.add(new_phone)
+        db.session.flush()
+
+        for category in phone.get("category", []):
+            db.session.add(
+                PhoneCategory(phone_id=new_phone.id, category=category)
+            )
+
+        for key, value in (phone.get("specs") or {}).items():
+            db.session.add(
+                PhoneSpec(phone_id=new_phone.id, spec_key=key, spec_val=value)
+            )
+
+        for historic_price in phone.get("priceHistory", []):
+            db.session.add(
+                PriceHistory(phone_id=new_phone.id, price=historic_price)
+            )
+
     db.session.commit()
     print(f"[FindAny] Seeded {len(data)} phones.")
 
+
 with app.app_context():
     db.create_all()
-    if not MYSQL_URI: seed_sqlite()
+    if not MYSQL_URI:
+        seed_sqlite()
+
 
 @app.route("/api/phones", methods=["GET"])
 def get_phones():
-    q = Phone.query.join(Brand)
-    price_min = request.args.get("price_min",type=int)
-    price_max = request.args.get("price_max",type=int)
-    if price_min: q = q.filter(Phone.price >= price_min)
-    if price_max: q = q.filter(Phone.price <= price_max)
+    query = Phone.query.join(Brand)
+
+    price_min = request.args.get("price_min", type=int)
+    price_max = request.args.get("price_max", type=int)
+    if price_min:
+        query = query.filter(Phone.price >= price_min)
+    if price_max:
+        query = query.filter(Phone.price <= price_max)
+
     rams = request.args.getlist("ram")
-    if rams: q = q.filter(Phone.ram.in_([int(r) for r in rams]))
+    if rams:
+        query = query.filter(Phone.ram.in_([int(ram) for ram in rams]))
+
     storages = request.args.getlist("storage")
-    if storages: q = q.filter(Phone.storage.in_([int(s) for s in storages]))
+    if storages:
+        query = query.filter(Phone.storage.in_([int(storage) for storage in storages]))
+
     chipsets = request.args.getlist("chipset")
-    if chipsets: q = q.filter(Phone.chipset.in_(chipsets))
-    cam_min = request.args.get("camera_min",type=int)
-    if cam_min: q = q.filter(Phone.camera >= cam_min)
-    bat_min = request.args.get("battery_min",type=int)
-    if bat_min: q = q.filter(Phone.battery >= bat_min)
+    if chipsets:
+        query = query.filter(Phone.chipset.in_(chipsets))
+
+    camera_min = request.args.get("camera_min", type=int)
+    if camera_min:
+        query = query.filter(Phone.camera >= camera_min)
+
+    battery_min = request.args.get("battery_min", type=int)
+    if battery_min:
+        query = query.filter(Phone.battery >= battery_min)
+
     networks = request.args.getlist("network")
-    if networks: q = q.filter(Phone.network.in_(networks))
+    if networks:
+        query = query.filter(Phone.network.in_(networks))
+
     category = request.args.get("category")
     if category and category != "all":
-        q = q.join(PhoneCategory, Phone.id==PhoneCategory.phone_id).filter(PhoneCategory.category==category)
-    search = request.args.get("q","").strip()
+        query = query.join(
+            PhoneCategory,
+            Phone.id == PhoneCategory.phone_id,
+        ).filter(PhoneCategory.category == category)
+
+    search = request.args.get("q", "").strip()
     if search:
         like = f"%{search}%"
-        q = q.filter(db.or_(Phone.name.ilike(like), Brand.name.ilike(like)))
-    sort = request.args.get("sort","popular")
-    if sort=="price_asc":    q = q.order_by(Phone.price.asc())
-    elif sort=="price_desc": q = q.order_by(Phone.price.desc())
-    elif sort=="rating":     q = q.order_by(Phone.rating.desc())
-    elif sort=="newest":     q = q.order_by(Phone.id.desc())
-    else:                    q = q.order_by(Phone.review_count.desc())
-    phones = q.all()
-    return jsonify([serialize_phone(p, get_cats(p.id)) for p in phones])
+        query = query.filter(db.or_(Phone.name.ilike(like), Brand.name.ilike(like)))
+
+    sort = request.args.get("sort", "popular")
+    if sort == "price_asc":
+        query = query.order_by(Phone.price.asc())
+    elif sort == "price_desc":
+        query = query.order_by(Phone.price.desc())
+    elif sort == "rating":
+        query = query.order_by(Phone.rating.desc())
+    elif sort == "newest":
+        query = query.order_by(Phone.id.desc())
+    else:
+        query = query.order_by(Phone.review_count.desc())
+
+    phones = query.all()
+    return jsonify([serialize_phone(phone, get_cats(phone.id)) for phone in phones])
+
 
 @app.route("/api/phones/<int:phone_id>", methods=["GET"])
 def get_phone(phone_id):
-    p = Phone.query.get_or_404(phone_id)
-    return jsonify(serialize_phone(p, get_cats(p.id), get_specs(p.id), get_history(p.id)))
+    phone = Phone.query.get_or_404(phone_id)
+    return jsonify(
+        serialize_phone(
+            phone,
+            get_cats(phone.id),
+            get_specs(phone.id),
+            get_history(phone.id),
+        )
+    )
+
 
 @app.route("/api/phones/search/suggest", methods=["GET"])
 def suggest():
-    q = request.args.get("q","").strip()
-    if len(q) < 2: return jsonify([])
-    like = f"%{q}%"
-    phones = Phone.query.join(Brand).filter(db.or_(Phone.name.ilike(like),Brand.name.ilike(like))).limit(6).all()
-    return jsonify([{"id":p.id,"label":f"{p.brand.name} {p.name}"} for p in phones])
+    query = request.args.get("q", "").strip()
+    if len(query) < 2:
+        return jsonify([])
+
+    like = f"%{query}%"
+    phones = (
+        Phone.query.join(Brand)
+        .filter(db.or_(Phone.name.ilike(like), Brand.name.ilike(like)))
+        .limit(6)
+        .all()
+    )
+    return jsonify(
+        [{"id": phone.id, "label": f"{phone.brand.name} {phone.name}"} for phone in phones]
+    )
+
 
 @app.route("/api/brands", methods=["GET"])
 def get_brands():
-    return jsonify([{"id":b.id,"name":b.name,"slug":b.slug} for b in Brand.query.order_by(Brand.name).all()])
+    return jsonify(
+        [
+            {"id": brand.id, "name": brand.name, "slug": brand.slug}
+            for brand in Brand.query.order_by(Brand.name).all()
+        ]
+    )
+
 
 @app.route("/api/phones/<int:phone_id>/history", methods=["GET"])
 def price_history(phone_id):
-    rows = PriceHistory.query.filter_by(phone_id=phone_id).order_by(PriceHistory.recorded_at).all()
-    return jsonify([{"price":r.price,"date":str(r.recorded_at)} for r in rows])
+    rows = (
+        PriceHistory.query.filter_by(phone_id=phone_id)
+        .order_by(PriceHistory.recorded_at)
+        .all()
+    )
+    return jsonify([{"price": row.price, "date": str(row.recorded_at)} for row in rows])
+
 
 @app.route("/api/stats", methods=["GET"])
 def stats():
-    return jsonify({"total_phones":Phone.query.count(),"total_brands":Brand.query.count(),"db_engine":"MySQL" if MYSQL_URI else "SQLite (dev)"})
+    return jsonify(
+        {
+            "total_phones": Phone.query.count(),
+            "total_brands": Brand.query.count(),
+            "db_engine": "MySQL" if MYSQL_URI else "SQLite (dev)",
+        }
+    )
+
 
 @app.route("/api/ai/recommend", methods=["POST"])
 def ai_recommend():
     data = request.get_json(silent=True) or {}
     query = (data.get("query") or "").strip()
     if not query:
-        return jsonify({"error":"Query is required"}), 400
+        return jsonify({"error": "Query is required"}), 400
 
     answer = claude_recommendation(query) or local_recommendation(query)
     return jsonify({"answer": answer})
 
+
 @app.route("/api/health", methods=["GET"])
 def health():
-    return jsonify({"status":"ok","app":"FindAny"})
+    return jsonify({"status": "ok", "app": "FindAny"})
+
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0",port=5000,debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)

@@ -16,7 +16,7 @@ down: ## Stop all services
 	docker-compose down
 
 test: ## Run tests locally
-	cd backend && bash test.sh
+	cd backend && python -m pip install -r requirements.txt pytest pytest-cov flake8 black isort mypy && python -m flake8 app.py --count --select=E9,F63,F7,F82 --show-source --statistics && python -m pytest
 
 clean: ## Clean up containers and volumes
 	docker-compose down -v
